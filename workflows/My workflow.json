@@ -1,0 +1,617 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        0
+      ],
+      "id": "d627ead4-023a-4edc-83b6-ee840f7891ed",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n\nconst data = item.json;\n\nconst memoText = `\n${data.agent_spec.variables.company_name} operates \n${data.agent_spec.variables.business_hours.days.join(\", \")}\nfrom ${data.agent_spec.variables.business_hours.start}\nto ${data.agent_spec.variables.business_hours.end}.\n`;\n\nreturn {\njson:{\naccount_id: data.account_id,\nversion: \"v1\",\naccount_memo: memoText.trim()\n}\n};\n\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        -16
+      ],
+      "id": "4da3aa29-c1a8-42e8-89b6-27f3212f6635",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "account_memo.json"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        -32
+      ],
+      "id": "6927e635-12a8-4464-b9b5-0869f5a9954d",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc",
+          "mode": "list",
+          "cachedResultName": "Clara_Output",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "account_id": "={{$json.account_id}}",
+            "version": "={{$json.version}}",
+            "account_memo": "={{$json.account_memo}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "account_id",
+              "displayName": "account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "version",
+              "displayName": "version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "account_memo",
+              "displayName": "account_memo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        688,
+        -32
+      ],
+      "id": "805e03a8-7827-4513-9456-d21bcde72297",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6BYXvt918WqfwZ8b",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n\nconst memo = item.json;\n\nconst systemPrompt = `\nYou are the virtual receptionist for ${memo.company_name}.\n\nBUSINESS HOURS\n${memo.business_hours.days.join(\", \")}\n${memo.business_hours.start} - ${memo.business_hours.end}\n\nSERVICES OFFERED\n${memo.services_supported.join(\", \")}\n\nOFFICE HOURS FLOW\n1. Greet caller\n2. Ask purpose of call\n3. Collect caller name and phone number\n4. Determine service request\n5. Schedule appointment or route call\n6. Confirm next steps\n7. Ask if anything else is needed\n8. End call politely\n\nAFTER HOURS FLOW\n1. Greet caller\n2. Determine if emergency\n3. If emergency:\n   - Collect name\n   - Collect phone number\n   - Collect address\n   - Attempt transfer to technician\n4. If transfer fails:\n   - Apologize\n   - Inform technician will call back shortly\n\nEMERGENCY DEFINITION\n${memo.emergency_definition.join(\", \")}\n`;\n\nconst agentSpec = {\n  agent_name: `${memo.company_name} Assistant`,\n  voice_style: \"professional\",\n  version: \"v1\",\n\n  variables: {\n    company_name: memo.company_name,\n    business_hours: memo.business_hours,\n    services_supported: memo.services_supported,\n    emergency_definition: memo.emergency_definition\n  },\n\n  system_prompt: systemPrompt,\n\n  transfer_protocol: {\n    strategy: \"immediate_transfer\",\n    retries: 2,\n    timeout: \"20 seconds\"\n  },\n\n  fallback_protocol: {\n    action: \"collect_caller_info\",\n    message: \"Our technician will call you shortly.\"\n  }\n};\n\nreturn {\njson:{\naccount_id: memo.account_id,\nagent_spec: agentSpec\n}\n};\n\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        0
+      ],
+      "id": "33041be3-b032-4e8e-845c-1f0172542869",
+      "name": "Generate Agent Spec"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "=agent_spec_{{$json.account_id}}_{{$json.version}}.json"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1216,
+        0
+      ],
+      "id": "0c241e09-8e11-4b74-afe2-ab41126aaaaa",
+      "name": "agent_spec"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc",
+          "mode": "list",
+          "cachedResultName": "Clara_Output",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1706406570,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc/edit#gid=1706406570"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "Demo processed",
+            "version": "={{$json.version}}",
+            "created_at": "={{$now}}",
+            "account_id": "={{$json.account_id}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "account_id",
+              "displayName": "account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "version",
+              "displayName": "version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        848,
+        -48
+      ],
+      "id": "7c39777b-5dce-4516-974c-88b2e5f2ce9f",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6BYXvt918WqfwZ8b",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d2d0c120-5ae5-43d7-a289-e1df6b5f8edd",
+              "name": "account_id",
+              "value": "acc_001",
+              "type": "string"
+            },
+            {
+              "id": "f3e9e5a7-eeda-489d-9ee5-70e9bc5fc629",
+              "name": "update_text",
+              "value": "Now open Saturday 10am to 2pm",
+              "type": "string"
+            },
+            {
+              "id": "5a0fd250-f7c5-4be0-82a0-299debd26036",
+              "name": "version",
+              "value": "v2",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        64,
+        256
+      ],
+      "id": "3e961965-4637-4dc1-833e-9d5992b6ff9a",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc",
+          "mode": "list",
+          "cachedResultName": "Clara_Output",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "account_id",
+              "lookupValue": "=={{$json[\"account_id\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        272,
+        256
+      ],
+      "id": "64a95fbd-f4de-4a61-a83b-0e3f4d5d9473",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6BYXvt918WqfwZ8b",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $items(\"Edit Fields\")[0].json;\n\nconst updatedMemo = `ABC Plumbing updated information:\n${input.update_text}\n\nEmergency routing rules remain unchanged.`;\n\nreturn [\n{\njson: {\naccount_id: input.account_id,\nversion: input.version,\naccount_memo: updatedMemo\n}\n}\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        256
+      ],
+      "id": "ed483f75-6caf-49c4-8672-0b13e440858a",
+      "name": "Apply Update"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $items(\"Edit Fields\")[0].json;\nconst data = $input.first().json;\n\nconst spec = {\nagent_name: `${input.account_id}_assistant`,\nsystem_prompt: `Assistant for ${input.account_id}\n\nBusiness Info:\n${data.account_memo}`\n};\n\nreturn [\n{\njson:{\naccount_id: input.account_id,\nversion: input.version,\naccount_memo: data.account_memo,\nagent_spec_v2: spec\n}\n}\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        240
+      ],
+      "id": "4c4fbf95-eccd-40b4-a7a7-2c393c1b0f41",
+      "name": "Generate v2 Agent Spec"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $items(\"Edit Fields\")[0].json;\nconst data = $input.first().json;\n\nconst changeLog = `Account ${input.account_id} updated.\n\nPrevious Version: v1\nNew Version: ${input.version}\n\nChange:\n${input.update_text}`;\n\nreturn [\n{\njson:{\naccount_id: input.account_id,\nversion: input.version,\naccount_memo: data.account_memo,\nchange_log: changeLog\n}\n}\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        256
+      ],
+      "id": "e25c3c22-71f0-422a-97df-fd335c1e6493",
+      "name": "Change Log"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc",
+          "mode": "list",
+          "cachedResultName": "Clara_Output",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBv1gix0yQfmuY3tdcLD6YM_gxc_L_mX_xy-r8ZpcJc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "account_id": "={{$json.account_id}}",
+            "version": "={{$json.version}}",
+            "account_memo": "={{$json.account_memo}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "account_id",
+              "displayName": "account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "version",
+              "displayName": "version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "account_memo",
+              "displayName": "account_memo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1056,
+        256
+      ],
+      "id": "3a862535-4dd3-47eb-b782-a11b16392c5a",
+      "name": "Append row in sheet1 (v2 memo)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6BYXvt918WqfwZ8b",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n\nconst transcript = item.json.transcript;\n\nlet company = \"Unknown Company\";\n\nif(transcript.includes(\"Plumbing\")) company = \"ABC Plumbing\";\nif(transcript.includes(\"Electric\")) company = \"Elite Electric\";\nif(transcript.includes(\"HVAC\")) company = \"Quick HVAC\";\nif(transcript.includes(\"Cleaning\")) company = \"Bright Cleaning\";\nif(transcript.includes(\"Landscaping\")) company = \"Prime Landscaping\";\n\nconst memo = {\n  account_id: item.json.account_id,\n\n  company_name: company,\n\n  business_hours: {\n    days: [\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\"],\n    start: \"09:00\",\n    end: \"17:00\"\n  },\n\n  services_supported: [],\n  emergency_definition: []\n};\n\nreturn { json: memo };\n\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        -16
+      ],
+      "id": "a9ceac16-eeac-4df1-8373-3610044f720a",
+      "name": "Extract Account Memo JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n{\njson:{\naccount_id:\"acc_001\",\ntranscript:\"ABC Plumbing operates Monday to Friday 9am to 5pm. Services include drain cleaning and pipe repair. Emergency calls include pipe bursts.\"\n}\n},\n{\njson:{\naccount_id:\"acc_002\",\ntranscript:\"Elite Electric offers electrical repair and installation services Monday to Saturday 8am to 6pm.\"\n}\n},\n{\njson:{\naccount_id:\"acc_003\",\ntranscript:\"Quick HVAC handles heating and cooling service. Emergency repairs available after hours.\"\n}\n},\n{\njson:{\naccount_id:\"acc_004\",\ntranscript:\"Bright Cleaning provides residential cleaning services Monday through Friday.\"\n}\n},\n{\njson:{\naccount_id:\"acc_005\",\ntranscript:\"Prime Landscaping offers lawn maintenance and garden design services.\"\n}\n}\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -16
+      ],
+      "id": "63ae30bd-cbd3-4bb0-b79a-933b1fa6f72b",
+      "name": "Load Demo Dataset"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load Demo Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "agent_spec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Agent Spec": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "agent_spec": {
+      "main": [
+        []
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Apply Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Update": {
+      "main": [
+        [
+          {
+            "node": "Generate v2 Agent Spec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate v2 Agent Spec": {
+      "main": [
+        [
+          {
+            "node": "Change Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Change Log": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1 (v2 memo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Account Memo JSON": {
+      "main": [
+        [
+          {
+            "node": "Generate Agent Spec",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Demo Dataset": {
+      "main": [
+        [
+          {
+            "node": "Extract Account Memo JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "7195357b-e77a-4b8d-869c-bbd356584c25",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "62267332be403604e71d5a856806e2079e78a4192e7bab3bb75a9f6fe7947d9f"
+  },
+  "id": "cWeSyDTE3caO8sVH",
+  "tags": []
+}
