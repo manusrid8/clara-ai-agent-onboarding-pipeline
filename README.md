@@ -106,6 +106,11 @@ The workflow demonstrates:
 
 ---
 
+
+# Architecture screenshot
+<img width="1623" height="817" alt="Screenshot 2026-03-04 235103" src="https://github.com/user-attachments/assets/32209397-fc73-4a09-9cf9-721fdf6763f8" />
+
+
 # Future Improvements
 
 - LLM-powered extraction
