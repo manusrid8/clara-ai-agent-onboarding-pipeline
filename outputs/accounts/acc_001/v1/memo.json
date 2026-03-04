@@ -1,1 +1,19 @@
-
+{
+  "account_id": "acc_001",
+  "company_name": "ABC Plumbing",
+  "business_hours": {
+    "days": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+    "start": "09:00",
+    "end": "17:00",
+    "timezone": "EST"
+  },
+  "services_supported": [
+    "drain cleaning",
+    "pipe repair"
+  ],
+  "emergency_definition": [
+    "pipe burst",
+    "water leak"
+  ],
+  "notes": "Generated from demo transcript"
+}
