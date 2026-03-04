@@ -1,1 +1,22 @@
-
+[
+  {
+    "account_id": "acc_001",
+    "transcript": "ABC Plumbing operates Monday to Friday 9am to 5pm. Services include drain cleaning and pipe repair. Emergency calls include pipe bursts."
+  },
+  {
+    "account_id": "acc_002",
+    "transcript": "Elite Electric offers electrical repair and installation services Monday to Saturday 8am to 6pm."
+  },
+  {
+    "account_id": "acc_003",
+    "transcript": "Quick HVAC handles heating and cooling service. Emergency repairs available after hours."
+  },
+  {
+    "account_id": "acc_004",
+    "transcript": "Bright Cleaning provides residential cleaning services Monday through Friday."
+  },
+  {
+    "account_id": "acc_005",
+    "transcript": "Prime Landscaping offers lawn maintenance and garden design services."
+  }
+]
