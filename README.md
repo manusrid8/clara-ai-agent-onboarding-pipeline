@@ -111,6 +111,13 @@ The workflow demonstrates:
 <img width="1623" height="817" alt="Screenshot 2026-03-04 235103" src="https://github.com/user-attachments/assets/32209397-fc73-4a09-9cf9-721fdf6763f8" />
 
 
+
+# Demo video
+
+https://github.com/user-attachments/assets/524bf8b7-193c-42d8-91b8-ea664f4d885c
+
+
+
 # Future Improvements
 
 - LLM-powered extraction
